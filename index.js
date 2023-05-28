@@ -19,7 +19,12 @@ app.get("/private", authorization, async (req, res, next) => {
 // global error handel
 app.use((err, req, res, next) => {
   console.log(err);
-  res.status(500).json({ message: "server error occurred" });
+  const message = err.message ? err.message : 'Server Error Occurred';
+  const status = err.status ? err.status : 500;
+
+  res.status(status).json({
+      message,
+  });
 });
 
 // database config

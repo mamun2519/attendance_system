@@ -11,7 +11,6 @@ const registerController = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     const user = await registerService({ name, email, password });
-    console.log(user);
 
     res.status(201).json({ message: "User Create Successfully", user });
   } catch (e) {

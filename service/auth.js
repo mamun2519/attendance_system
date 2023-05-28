@@ -1,46 +1,50 @@
-const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { findUserByProperty, createUser } = require("./user");
+const error = require("../utils/error");
 const registerService = async ({ name, email, password }) => {
-  try {
-    let user = await User.findOne({ email });
-    console.log(user);
-    if (user) {
-      res.status(400).json({ message: "User already exists" });
-    }
-    user = new User({ name, email, password });
+  let user = await findUserByProperty("email", email);
+  console.log(user);
+  if (user) {
+    throw error("User already exists", 400);
+  }
 
-    const salt = await bcrypt.genSalt(8);
-    const hashPassword = await bcrypt.hash(password, salt);
-    user.password = hashPassword;
-    return user.save();
-  } catch (e) {}
+  const salt = await bcrypt.genSalt(8);
+  const hashPassword = await bcrypt.hash(password, salt);
+
+  return createUser({ name, email, password: hashPassword });
 };
 
 const loginService = async ({ email, password }) => {
-  const user = await User.findOne({ email });
+  const user = await findUserByProperty("email", email);
 
   if (!user) {
-    res.status(400).json({ message: "invalid Credential" });
+    throw error("invalid Credential", 400);
   }
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    res.status(400).json({ message: "invalid Credential" });
+    throw error("invalid Credential", 400);
   }
 
-  delete user._doc.password;
-  const token = jwt.sign(user._doc, "secret-key", { expiresIn: "2h" });
+  const payload = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    roles: user.roles,
+    accountStatus: user.accountStatus,
+  };
+  const token = jwt.sign(payload, "secret-key", { expiresIn: "2h" });
   return token;
 };
 
 const resetPasswordService = async ({ email, oldPassword, newPassword }) => {
-  let user = await User.findOne({ email });
+  let user = await findUserByProperty("email", email);
   if (!user) {
-    res.status(400).json({ message: "invalid Credential" });
+    throw error("invalid Credential", 400);
   }
   const isMatch = await bcrypt.compare(oldPassword, user.password);
   if (!isMatch) {
-    res.status(400).json({ message: "invalid Credential" });
+    throw error("invalid Credential", 400);
   }
 
   // SET NEW PASSWORD
