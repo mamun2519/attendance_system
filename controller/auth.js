@@ -1,6 +1,3 @@
-const User = require("../models/user");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const {
   registerService,
   loginService,
@@ -22,7 +19,7 @@ const loginController = async (req, res, next) => {
   const { password, email } = req.body;
   try {
     const token = await loginService({ email, password });
-    console.log(token);
+
     res.status(200).json({ message: "login success", token });
   } catch (e) {
     next(e);
